@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building Dynamic RBAC with Entra ID & User-Level Permission Overrides — Vishnudharan B</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  .blog-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 140px clamp(24px, 5vw, 48px) 80px;
+  }
+  .blog-header { margin-bottom: 48px; }
+  .blog-date { color: var(--accent); font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .blog-title { font-size: 40px; font-weight: 700; color: var(--text); line-height: 1.2; margin-bottom: 24px; }
+  .blog-content { font-size: 16px; color: var(--text2); line-height: 1.8; }
+  .blog-content h2 { font-size: 24px; font-weight: 600; color: var(--text); margin: 40px 0 16px; }
+  .blog-content p { margin-bottom: 20px; }
+  .blog-content ul { margin-bottom: 20px; padding-left: 20px; list-style-type: disc; }
+  .blog-content li { margin-bottom: 10px; }
+  .blog-content code { background: var(--surface2); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-size: 14px; color: var(--text); font-family: monospace; }
+  .blog-content blockquote { border-left: 4px solid var(--accent); padding-left: 16px; font-style: italic; color: var(--text3); margin: 24px 0; }
+  .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--text2); font-size: 14px; text-decoration: none; margin-bottom: 32px; transition: color 0.2s; }
+  .back-link:hover { color: var(--text); }
+  .back-link svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">VB</div>
+  <div class="nav-links">
+    <a href="../index.html#experience">Experience</a>
+    <a href="../index.html#achievements">Achievements</a>
+    <a href="../index.html#projects">Projects</a>
+    <a href="../index.html#blog">Blog</a>
+    <a href="../index.html#skills">Skills</a>
+  </div>
+</nav>
+
+<div class="blog-container">
+  <a href="../index.html#blog" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    Back to Home
+  </a>
+  <div class="blog-header">
+    <div class="blog-date">September 07, 2026</div>
+    <h1 class="blog-title">Building Dynamic RBAC with Entra ID & User-Level Permission Overrides</h1>
+  </div>
+  <div class="blog-content">
+    <p><strong>Lessons from a Real System</strong></p>
+
+    <h2>The problem with <code>if user.role == "admin"</code></h2>
+    <p>Most RBAC implementations start the same way: an enum. <code>employee</code>, <code>manager</code>, <code>admin</code>. It's fast to ship, easy to reason about, and it works — right up until someone asks for a fourth role, or a fifth, or "can we give Priya everything a compliance officer has, plus the ability to edit wiring lookup tables, without making her a compliance officer?" A hardcoded enum can't answer that question without a code deploy. That's the wall every growing RBAC system eventually hits, and it's the one worth designing around from day one if you can.</p>
+    <p>Here's how I approached it building out RBAC for a highly regulated <strong>Corporate Treasury Management Platform</strong> on top of Microsoft Entra ID (Azure AD) — including a few mistakes and a real security incident that shaped the final design.</p>
+
+    <h2>Start from the data model, not the enum</h2>
+    <p>The core shift is treating roles as rows, not values. Three tables carry the whole system:</p>
+    <ul>
+      <li><code>roles</code> — <code>id</code>, <code>name</code>, <code>is_system</code> (protects the seeded baseline roles from rename/delete), <code>is_default</code> (which role a user falls back to if nothing else claims them).</li>
+      <li><code>permissions</code> — a flat catalog of fine-grained capability codes (<code>transaction.view.own</code>, <code>transaction.view.department</code>, <code>transaction.approve_bulk</code>, <code>user.manage</code>, <code>role.manage</code>, and so on — deliberately granular, not one blob permission per feature).</li>
+      <li><code>role_permissions</code> — a many-to-many join: which permissions each role grants by default.</li>
+    </ul>
+    <p>None of this is novel — it's the standard RBAC shape. The part that actually matters is what you do on top of it.</p>
+
+    <h2>The override layer: don't make people abuse roles to grant one permission</h2>
+    <p>The moment you have real roles, you get a real request: "give this one treasury analyst the ability to bulk-approve low-value transactions, but don't make them a manager." If your only lever is role, you're stuck cloning roles for one-off exceptions — which is how you end up with <code>manager</code>, <code>manager-but-no-approve</code>, <code>manager-2</code> six months later.</p>
+    <p>The fix is a fourth table: per-user permission overrides, each one a <code>(user, permission, effect)</code> triple where effect is <code>grant</code> or <code>revoke</code>. A user's actual permission set becomes:</p>
+    <blockquote>role defaults ∪ overrides(grant) − overrides(revoke)</blockquote>
+    <p>resolved fresh for every login. This one addition means the role table stays clean — roles describe the common case, overrides describe the exception — and nobody's tempted to fork a new role just to hand one person one extra permission.</p>
+
+    <h2>Wiring it to Entra: group claims, not hardcoded config</h2>
+    <p>The Entra side of this is a single mapping table: <code>idp_group</code> → <code>role</code>. On login, you read the groups claim off the ID token, look up which role(s) map to those group names, and assign the role. The two decisions that matter here:</p>
+    <ul>
+      <li><strong>Make the mapping admin-editable, not config.</strong> The naive version is an env var: <code>OIDC_ADMIN_GROUPS=Group-A,Group-B</code>. That means every new Entra group requires a deploy. Putting it in a table means an IT admin can wire up a new Entra security group to an existing role from the admin UI, same afternoon it's created in Azure.</li>
+      <li><strong>Treat ambiguity as an error, not a puzzle to solve.</strong> If a user's Entra groups map to two different roles, don't silently pick one — reject the login with a clear error. Silently resolving it (e.g., "highest privilege wins") just means a misconfigured group mapping fails open instead of loud, and nobody notices until it matters.</li>
+    </ul>
+    <p>There's a second wrinkle worth designing for: manual overrides need to survive IdP sync. If an admin manually bumps someone's role in the app, and that person's Entra groups haven't changed, the next login shouldn't silently revert it. The fix is a <code>role_source</code> flag (<code>idp</code> vs. <code>manual</code>) — IdP-driven sync only touches accounts still flagged <code>idp</code>; a manual change flips that flag and sticks until an admin explicitly reverts it.</p>
+
+    <h2>Make permission checks free</h2>
+    <p>Resolving a user's full permission set is a handful of joins — cheap once, expensive if you do it on every request. So don't: resolve it once, at login, and bake the result straight into the JWT. Every subsequent request checks permission in <code>token.perms</code> — a list membership test, zero database round trips.</p>
+    <p>The catch: a JWT is a bearer token good until it expires. If an admin revokes a permission, or deactivates someone, or changes their role, the old token is still valid until it naturally times out — unless you account for it. The fix is a monotonic <code>token_version</code> stamped into every issued token. Bump the user's <code>token_version</code> on any permission-relevant change (role edit, deactivation, explicit logout), and check it on every request: a token issued before the current version is rejected outright, even though its signature is still perfectly valid. That's what turns "your access was just revoked" into an immediate fact instead of a 30-minute-token-expiry-later fact.</p>
+
+    <h2>The escape hatches you can't fully avoid — and how to contain them</h2>
+    <p>Purism says every authorization decision should route through the permission system, with zero hardcoded role names anywhere in the codebase. In practice, a system needs at least one break-glass path that works before the permission system can even be trusted — a bootstrap admin account for first boot, a local login path that has to work even if Entra itself is down or misconfigured. Those paths, by necessity, check a literal role name rather than a permission code, because they exist to get you into the system that assigns permissions in the first place.</p>
+    <p>The honest move isn't to pretend you can eliminate these — it's to name them, document them explicitly as the sanctioned exceptions, and keep the list as short as possible. In this system that's exactly two things: the seed script that creates the very first account, and the local login gate that checks for it. Everything else — every feature, every admin action — goes through the permission system, no exceptions.</p>
+
+    <h2>The war story: adding a top-tier role taught me where the real boundary lives</h2>
+    <p>The most useful lesson came from a mistake. I added a new top-tier role — let's call it Super Admin — to hold one especially sensitive permission (SSO/Entra configuration itself) exclusively, deliberately unreachable via Entra group mapping, reachable only through that one break-glass local login. The login gate was updated to check for it. Looked airtight.</p>
+    <p>It wasn't. I ran a focused security review before shipping, and it surfaced something I'd missed: the login gate was the only place I'd added the restriction. The existing "create a local account" and "edit a user's role" endpoints — both already gated behind a much more common, much more widely-held permission — had no idea the new role was supposed to be exclusive. Anyone holding that ordinary permission could just assign themselves the new top-tier role through a completely unrelated form, then log in through the gate that was supposedly guarding it. The gate was solid; the door next to it was wide open.</p>
+    <p>The fix, and the actual lesson: a privilege boundary has to be enforced everywhere a role gets attached to an account, not just at the one endpoint you were thinking about when you drew the boundary. That meant walking every code path that assigns a role — account creation, profile edits, the Entra-mapping admin UI — and adding one shared guard, rather than trusting that a single checkpoint downstream would catch what upstream code let through. If I were doing it again, I'd draw that map — every place a role gets assigned — before writing the new role, not after a review found the gap.</p>
+
+    <h2>Takeaways</h2>
+    <ul>
+      <li><strong>Roles are data, not code.</strong> The moment "add a role" requires a deploy, you're already behind.</li>
+      <li><strong>Give yourself an override layer.</strong> Roles model the common case; per-user grant/revoke handles the exception, so nobody forks a role just to patch one person's access.</li>
+      <li><strong>Admin-editable IdP mapping, and fail loud on ambiguity.</strong> Silent "pick a winner" logic on conflicting group mappings is a bug waiting to be invisible.</li>
+      <li><strong>Bake permissions into the token, invalidate by version, not by waiting.</strong> Free reads, immediate revocation — you can have both.</li>
+      <li><strong>Name your escape hatches on purpose, and keep the list short.</strong> Every hardcoded role check should be a deliberate, documented exception, not something that crept in.</li>
+      <li><strong>A permission boundary is only as strong as its least-guarded entry point.</strong> Before shipping a new privilege tier, map every path that can assign a role to an account — not just the one you're actively building.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">© 2026 Vishnudharan B</div>
+</footer>
+</body>
+</html>

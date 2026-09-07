@@ -24,6 +24,7 @@
     <a href="#experience">Experience</a>
     <a href="#achievements">Achievements</a>
     <a href="#projects">Projects</a>
+    <a href="#blog">Blog</a>
     <a href="#skills">Skills</a>
     <a href="#education">Education</a>
     <a href="#certifications">Certifications</a>
@@ -85,11 +86,14 @@
             <div class="exp-date">Jul 2026 – Present</div>
           </div>
           <div class="exp-role">Software Engineer Intern · Bangalore, India</div>
+          <div style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; margin-top: 4px;">Openmynz IMS</div>
           <div class="exp-bullets">
-            <div class="exp-bullet">Joining as a software engineer intern — building backend systems at a Bangalore-based software company</div>
+            <div class="exp-bullet">Architected and delivered Openmynz IMS from the ground up—a full-stack enterprise asset lifecycle platform (FastAPI, React, PostgreSQL) driving end-to-end hardware/software tracking with transaction-safe bulk data ingestion</div>
+            <div class="exp-bullet">Migrated authentication to Microsoft Entra ID (OIDC) and architected a dynamic, database-backed RBAC system with entra group to db role mapping and real-time JWT invalidation</div>
+            <div class="exp-bullet">Ensured reliability with 60+ Pytest cases, 30+ Alembic migrations, WebSocket notifications, and closed a privilege-escalation gap via a self-initiated security review</div>
           </div>
           <div class="tag-row">
-            <span class="tag">Python</span><span class="tag">FastAPI</span><span class="tag">Backend</span>
+            <span class="tag">FastAPI</span><span class="tag">React</span><span class="tag">PostgreSQL</span><span class="tag">Entra ID</span><span class="tag">Pytest</span>
           </div>
         </div>
       </div>
@@ -265,6 +269,30 @@
         <div class="proj-desc">Oppie is a Ransomware Scanner that detects and analyses ransomware files. Built during my first year of B.Tech at KEC Hackathon and secured 1st place.</div>
         <div class="tag-row">
           <span class="tag">Python</span><span class="tag">Flask</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BLOG -->
+  <section id="blog">
+    <div class="eyebrow">Blog</div>
+    <div class="proj-grid">
+
+
+      <div class="proj-card">
+        <div class="proj-header">
+          <div class="proj-name">Building Dynamic RBAC with Entra ID & User-Level Permission Overrides</div>
+          <a href="blog/dynamic-rbac-entra-id.html" class="proj-link">
+            Read
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="proj-badge">Sep 07, 2026</div>
+        <div class="proj-desc">Exploring the architecture behind migrating from Keycloak to Microsoft Entra ID, and implementing a fully database-backed Role-Based Access Control system.</div>
+        <div class="tag-row">
+          <span class="tag">Entra ID</span><span class="tag">Security</span>
         </div>
       </div>
 

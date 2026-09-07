@@ -790,12 +790,14 @@
       gap: 24px;
     }
     .hero-text { text-align: center; }
-    .hero-links { justify-content: center; }
-    .hero-photo { width: 140px; height: 140px; margin: 0 auto; }
-    .hero-name { font-size: 30px; }
-    .hero-role { font-size: 16px; }
-    .hero-location { font-size: 13px; }
-    #hero { padding-top: 100px; padding-bottom: 64px; }
+    .hero-links { justify-content: center; gap: 8px; }
+    .hero-link { padding: 6px 10px; font-size: 12px; }
+    .hero-link svg { width: 14px; height: 14px; }
+    .hero-photo { width: 120px; height: 120px; margin: 0 auto; }
+    .hero-name { font-size: 30px; margin-bottom: 8px; }
+    .hero-role { font-size: 15px; margin-bottom: 6px; }
+    .hero-location { font-size: 13px; margin-bottom: 20px; }
+    #hero { padding-top: 80px; padding-bottom: 32px; }
 
     /* Achievements */
     .ach-grid { grid-template-columns: 1fr; }
@@ -828,8 +830,8 @@
     .contact-sub { font-size: 15px; }
 
     /* Typography */
-    .eyebrow { font-size: 26px; margin-bottom: 32px; }
-    section { padding: 64px 0; }
+    .eyebrow { font-size: 26px; margin-bottom: 24px; }
+    section { padding: 48px 0; }
 
     /* Carousel modal */
     .carousel-modal { padding: 12px; }

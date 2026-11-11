@@ -1,0 +1,60 @@
+---
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => data.status === 'published');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{post.data.title} — Vishnudharan B</title>
+    <meta name="description" content={post.data.description} />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="blog-container">
+      <a class="back-link" href="/blog/">← Back to blog</a>
+      <header class="blog-header">
+        <div class="blog-date">
+          {post.data.publishedAt.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </div>
+        <h1 class="blog-title">{post.data.title}</h1>
+        <div class="tag-row">
+          {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+        </div>
+      </header>
+      <article class="blog-content"><Content /></article>
+    </main>
+  </body>
+</html>
+
+<style>
+  .blog-container { max-width: 800px; margin: 0 auto; padding: 120px 24px 80px; }
+  .blog-header { margin-bottom: 48px; }
+  .blog-date { color: var(--accent); font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .blog-title { font-size: 40px; line-height: 1.2; margin-bottom: 24px; }
+  .blog-content { color: var(--text2); font-size: 16px; line-height: 1.8; }
+  .blog-content :global(h2) { color: var(--text); font-size: 24px; margin: 40px 0 16px; }
+  .blog-content :global(p) { margin-bottom: 20px; }
+  .blog-content :global(ul) { list-style: disc; margin: 0 0 20px; padding-left: 24px; }
+  .blog-content :global(li) { margin-bottom: 8px; }
+  .blog-content :global(code) { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; color: var(--text); }
+  .blog-content :global(blockquote) { border-left: 4px solid var(--accent); color: var(--text3); margin: 24px 0; padding-left: 16px; }
+  .back-link { display: inline-block; color: var(--text2); margin-bottom: 32px; }
+  .back-link:hover { color: var(--text); }
+</style>

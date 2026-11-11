@@ -1,0 +1,62 @@
+---
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => data.status === 'published'))
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Blog — Vishnudharan B</title>
+    <meta
+      name="description"
+      content="Notes on backend engineering, security, cloud, and distributed systems."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="blog-container">
+      <a class="back-link" href="/">← Back to portfolio</a>
+      <header class="blog-header">
+        <div class="blog-date">Writing</div>
+        <h1 class="blog-title">Blog</h1>
+        <p class="blog-content">Notes on backend engineering, security, cloud, and distributed systems.</p>
+      </header>
+
+      <div class="blog-list">
+        {posts.map((post) => (
+          <article class="blog-card">
+            <div class="blog-date">
+              {post.data.publishedAt.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </div>
+            <h2 class="blog-card-title"><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
+            <p class="blog-content">{post.data.description}</p>
+            <div class="tag-row">
+              {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+            </div>
+          </article>
+        ))}
+      </div>
+    </main>
+  </body>
+</html>
+
+<style>
+  .blog-container { max-width: 800px; margin: 0 auto; padding: 120px 24px 80px; }
+  .blog-header { margin-bottom: 48px; }
+  .blog-date { color: var(--accent); font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .blog-title { font-size: 40px; line-height: 1.2; margin-bottom: 16px; }
+  .blog-content { color: var(--text2); line-height: 1.8; }
+  .blog-card { border-top: 1px solid var(--border); padding: 28px 0; }
+  .blog-card-title { font-size: 24px; line-height: 1.35; margin-bottom: 12px; }
+  .blog-card-title a:hover { color: var(--accent); }
+  .back-link { display: inline-block; color: var(--text2); margin-bottom: 32px; }
+  .back-link:hover { color: var(--text); }
+</style>

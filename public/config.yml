@@ -1,0 +1,28 @@
+backend:
+  name: github
+  repo: Vishnudharan24/vishnu-portfolio
+  branch: main
+  base_url: https://YOUR-OAUTH-PROXY.example.com
+  auth_endpoint: auth
+
+media_folder: "public/images/blog"
+public_folder: "/images/blog"
+
+collections:
+  - name: blog
+    label: Blog posts
+    folder: "src/content/blog"
+    create: true
+    slug: "{{slug}}"
+    format: "frontmatter"
+    extension: "md"
+    fields:
+      - { label: Title, name: title, widget: string }
+      - { label: Description, name: description, widget: text }
+      - { label: Published date, name: publishedAt, widget: datetime, format: "YYYY-MM-DD" }
+      - { label: Updated date, name: updatedAt, widget: datetime, required: false, format: "YYYY-MM-DD" }
+      - { label: Status, name: status, widget: select, options: [draft, published], default: draft }
+      - { label: Tags, name: tags, widget: list, default: [] }
+      - { label: Cover image, name: coverImage, widget: image, required: false }
+      - { label: Featured, name: featured, widget: boolean, default: false }
+      - { label: Body, name: body, widget: markdown }

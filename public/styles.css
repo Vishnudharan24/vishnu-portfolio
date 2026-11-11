@@ -1,15 +1,15 @@
 /* ── TOKENS ── */
   :root {
-    --bg:        #0C0C0C;
-    --surface:   #141414;
-    --surface2:  #1C1C1C;
-    --border:    #242424;
-    --border2:   #2E2E2E;
+    --bg:        #0A0D0C;
+    --surface:   #111816;
+    --surface2:  #18211E;
+    --border:    #22312C;
+    --border2:   #345047;
     --text:      #F0EDE6;
     --text2:     #999690;
     --text3:     #5A5855;
-    --accent:    #1D9E75;
-    --accent2:   #15764F;
+    --accent:    #36C995;
+    --accent2:   #1F916B;
     --warm:      #D4C9A8;
     --font:      'Inter', system-ui, sans-serif;
   }
@@ -19,7 +19,9 @@
   html { scroll-behavior: smooth; }
   body {
     font-family: var(--font);
-    background: var(--bg);
+    background:
+      radial-gradient(circle at 85% 4%, rgba(54, 201, 149, 0.1), transparent 28rem),
+      var(--bg);
     color: var(--text);
     font-size: 16px;
     line-height: 1.7;
@@ -29,13 +31,14 @@
   a { color: inherit; text-decoration: none; }
   img { display: block; max-width: 100%; }
   ul { list-style: none; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
   /* ── NAV ── */
   nav {
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 100;
-    background: rgba(12, 12, 12, 0.88);
+    background: rgba(10, 13, 12, 0.82);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
@@ -59,7 +62,7 @@
   .nav-links a {
     font-size: 14px;
     color: var(--text2);
-    transition: color 0.15s;
+    transition: color 0.2s ease;
   }
   .nav-links a:hover { color: var(--text); }
   .nav-resume {
@@ -82,6 +85,27 @@
   }
   section { padding: 96px 0; border-top: none; }
   section:first-of-type { border-top: none; }
+  .section-heading {
+    align-items: flex-end;
+    display: flex;
+    gap: 24px;
+    justify-content: space-between;
+    margin-bottom: 44px;
+  }
+  .section-heading .eyebrow { margin-bottom: 0; }
+  .section-intro {
+    color: var(--text2);
+    font-size: 15px;
+    margin-top: 12px;
+    max-width: 520px;
+  }
+  .section-link {
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .section-link:hover { color: var(--text); }
 
   /* ── SECTION EYEBROW ── */
   .eyebrow {
@@ -207,6 +231,13 @@
     height: 100%;
     object-fit: cover;
   }
+  .about-text {
+    color: var(--text2);
+    font-size: 16px;
+    line-height: 1.8;
+    max-width: 800px;
+  }
+  .about-text p + p { margin-top: 16px; }
 
   /* ── ACHIEVEMENTS ── */
   .ach-grid {
@@ -219,9 +250,13 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .ach-card:hover { border-color: var(--border2); }
+  .ach-card:hover {
+    border-color: var(--accent2);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    transform: translateY(-4px);
+  }
   .ach-card-button {
     appearance: none;
     color: inherit;
@@ -411,9 +446,14 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .proj-card:hover { border-color: var(--border2); }
+  .proj-card:hover {
+    border-color: var(--accent2);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    transform: translateY(-4px);
+  }
+  .blog-card { min-height: 250px; }
   .proj-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
   .proj-name {
     font-size: 17px;
@@ -474,9 +514,9 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: border-color 0.15s;
+    transition: border-color 0.2s, transform 0.2s ease;
   }
-  .skill-item:hover { border-color: var(--border2); }
+  .skill-item:hover { border-color: var(--accent2); transform: translateY(-3px); }
   .skill-icon {
     width: 34px;
     height: 34px;

@@ -36,7 +36,7 @@ const posts = (await getCollection('blog', ({ data }) => data.status === 'publis
                 day: 'numeric',
               })}
             </div>
-            <h2 class="blog-card-title"><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
+            <h2 class="blog-card-title"><a href={`/blog/${post.id.replace(/\.md$/, '')}/`}>{post.data.title}</a></h2>
             <p class="blog-content">{post.data.description}</p>
             <div class="tag-row">
               {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
